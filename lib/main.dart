@@ -1,77 +1,59 @@
 import 'package:flutter/material.dart';
 
 void main() => runApp(MaterialApp(
-      title: 'Progress bar',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: MyApp(),
-    ));
+  title: 'Flutter App',
+  theme: ThemeData(
+    primaryColor: Colors.blue
+  ),
+  home: ClipTestRoute(),
+));
 
-class MyApp extends StatefulWidget {
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
-  AnimationController _animationController;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(vsync: this, duration: Duration(seconds: 3));
-    _animationController.forward();
-    _animationController.addListener(() => setState(() {}));
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _animationController.dispose();
-  }
+class ClipTestRoute extends StatelessWidget {
+  const ClipTestRoute({Key key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    Widget avatar = Image.asset('assets/images/avatar.jpg', width: 60.0,);
     return Scaffold(
-        appBar: AppBar(
-          title: Text('Progress bar'),
-        ),
-        body: Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
-            child: Column(
+      appBar: AppBar(
+        title: Text('剪裁'),
+      ),
+      body: Center(
+        child: Column(
+          children: <Widget>[
+            avatar,
+            ClipOval(child: avatar,),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(5.0),
+              child: avatar,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                LinearProgressIndicator(
-                  value: 0.5, // 没有该值则执行循环动画
-                  backgroundColor: Colors.grey[200],
-                  valueColor: AlwaysStoppedAnimation(Colors.blue),
+                Align(
+                  alignment: Alignment.topLeft,
+                  widthFactor: .5,
+                  child: avatar,
                 ),
-                CircularProgressIndicator(
-                  backgroundColor: Colors.grey[200],
-                  valueColor: AlwaysStoppedAnimation(Colors.blue),
-                ),
-                CircularProgressIndicator(
-                  backgroundColor: Colors.grey[200],
-                  valueColor: AlwaysStoppedAnimation(Colors.blue),
-                  value: .5,
-                ),
-                SizedBox(
-                  height: 100.0,
-                  width: 130.0,
-                  child: CircularProgressIndicator(
-                    backgroundColor: Colors.grey[200],
-                    valueColor: AlwaysStoppedAnimation(Colors.blue),
-                    value: .7,
-                  ),
-                ),
-                SingleChildScrollView(
-                  child: LinearProgressIndicator(
-                    backgroundColor: Colors.grey[200],
-                    valueColor: ColorTween(
-                      begin: Colors.grey,
-                      end: Colors.blue
-                    ).animate(_animationController),
-                    value: .6,
-                  ),
-                )
+                Text("你好世界", style: TextStyle(color: Colors.green),)
               ],
-            )));
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                ClipRect(//将溢出部分剪裁
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    widthFactor: .5,//宽度设为原来宽度一半
+                    child: avatar,
+                  ),
+                ),
+                Text("你好世界",style: TextStyle(color: Colors.green))
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
