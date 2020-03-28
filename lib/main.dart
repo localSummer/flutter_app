@@ -1,164 +1,96 @@
-import 'dart:collection';
-
 import 'package:flutter/material.dart';
 
-void main() => runApp(MaterialApp(
-  title: 'Flutter App',
-  home: Scaffold(
-    appBar: AppBar(
-      title: Text('Flutter'),
-    ),
-    body: ProviderRoute(),
-  ),
-));
-
-class InheritedProvider<T> extends InheritedWidget {
-  InheritedProvider({Key key, this.child, @required this.data}) : super(key: key, child: child);
-
-  final Widget child;
-
-  final T data;
-
-  @override
-  bool updateShouldNotify( InheritedProvider<T> oldWidget) {
-    return true;
-  }
-}
-
-Type _typeof<T>() => T;
-
-class ChangeNotifierProvider<T extends ChangeNotifier> extends StatefulWidget {
-  ChangeNotifierProvider({
-    Key key,
-    this.data,
-    this.child
-  }): super(key: key);
-
-  final Widget child;
-  final T data;
-
-  /* static T of<T>(BuildContext context) {
-    final type = _typeof<InheritedProvider<T>>();
-    final provider = context.inheritFromWidgetOfExactType(type) as InheritedProvider<T>;
-    return provider.data;
-  } */
-
-  static T of<T>(BuildContext context, {bool listen = true}) {
-    final provider = listen
-      ? context.dependOnInheritedWidgetOfExactType<InheritedProvider<T>>()
-      : context.findAncestorWidgetOfExactType<InheritedProvider<T>>();
-    return provider.data;
-  }
-
-  @override
-  _ChangeNotifierProviderState<T> createState() {
-    return _ChangeNotifierProviderState<T>();
-  }
-}
-
-class _ChangeNotifierProviderState<T extends ChangeNotifier> extends State<ChangeNotifierProvider<T>> {
-  void update() {
-    setState(() {
-      
-    });
-  }
-
-  @override
-  void initState() { 
-    super.initState();
-    widget.data.addListener(update);
-  }
-
-  @override
-  void dispose() {
-    widget.data.removeListener(update);
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget (ChangeNotifierProvider<T> oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.data != oldWidget.data) {
-      oldWidget.data.removeListener(update);
-      widget.data.addListener(update);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return InheritedProvider<T>(
-      data: widget.data,
-      child: widget.child,
-    );
-  }
-}
-
-class Item {
-  Item(this.price, this.count);
-
-  double price;
-  int count;
-}
-
-class CartModal extends ChangeNotifier {
-  final List<Item> _items = [];
-
-  UnmodifiableListView<Item> get items => UnmodifiableListView(_items);
-
-  double get totalPrice => _items.fold(0, (value, item) => value + item.count * item.price);
-
-  void add(Item item) {
-    _items.add(item);
-    notifyListeners();
-  }
-}
-
-class ProviderRoute extends StatefulWidget {
-  ProviderRoute({Key key}) : super(key: key);
-
-  @override
-  _ProviderRouteState createState() => _ProviderRouteState();
-}
-
-class _ProviderRouteState extends State<ProviderRoute> {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ChangeNotifierProvider<CartModal>(
-        data: CartModal(),
-        child: Column(
-          children: <Widget>[
-            Consumer<CartModal>(
-              builder: (context, cart)=> Text("总价: ${cart.totalPrice}")
-            ),
-            Builder(builder: (context) {
-              print("RaisedButton build"); //在后面优化部分会用到
-              return RaisedButton(
-                child: Text('添加商品'),
-                onPressed: () {
-                  ChangeNotifierProvider.of<CartModal>(context, listen: false).add(Item(20.0, 1));
-                },
-              );
-            })
-          ],
-        )
+void main(List<String> args) {
+  return runApp(MaterialApp(
+    title: 'Dialog State Manage',
+    home: Scaffold(
+      appBar: AppBar(
+        title: Text('Dialog'),
       ),
-    );
-  }
+      body: DialogRoute(),
+    ),
+  ));
 }
 
-class Consumer<T> extends StatelessWidget {
-  const Consumer({Key key, this.child, @required this.builder}) : assert(builder != null), super(key: key);
+class DialogRoute extends StatefulWidget {
+  DialogRoute({Key key}) : super(key: key);
 
-  final Widget child;
+  @override
+  _DialogRouteState createState() => _DialogRouteState();
+}
 
-  final Widget Function(BuildContext context, T value) builder;
+class _DialogRouteState extends State<DialogRoute> {
+  bool withTree = false;
 
   @override
   Widget build(BuildContext context) {
-    return child != null ? child : builder(
-      context,
-      ChangeNotifierProvider.of<T>(context) //自动获取Model
+    return Container(
+       child: Column(
+         mainAxisAlignment: MainAxisAlignment.center,
+         crossAxisAlignment: CrossAxisAlignment.center,
+         children: <Widget>[
+           RaisedButton(
+             child: Text('打开对话框'),
+             onPressed: () async {
+              bool delete = await showDeleteConfirmDialog(context);
+              if (delete == null) {
+                print("取消删除");
+              } else {
+                print("同时删除子目录: $delete");
+              }
+             },
+           )
+         ],
+       ),
+    );
+  }
+
+  Future<bool> showDeleteConfirmDialog(BuildContext context) {
+    withTree = false;
+    return showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('提示'),
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text('您确定要删除当前文件吗?'),
+              Row(
+                children: <Widget>[
+                  Text('同时删除子目录'),
+                  StatefulBuilder(
+                    builder: (context, _setState) {
+                      return Checkbox(
+                        value: withTree,
+                        onChanged: (bool value) => {
+                          _setState(() {
+                            withTree = !withTree;
+                          })
+                        },
+                      );
+                    },
+                  )
+                ],
+              )
+            ],
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text("取消"),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            FlatButton(
+              child: Text("删除"),
+              onPressed: () {
+                //执行删除操作
+                Navigator.of(context).pop(withTree);
+              },
+            ),
+          ],
+        );
+      }
     );
   }
 }
